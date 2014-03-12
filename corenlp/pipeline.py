@@ -5,26 +5,46 @@ import subprocess
 _default_annotators = ['tokenize', 'ssplit', 'pos', 'lemma', 'ner', 'parse', 'dcoref']
 _default_mem = '2500m'
 _default_libver = '3.2.0'
+_default_threads = 1
 _pipeline_class = 'edu.stanford.nlp.pipeline.StanfordCoreNLP'
 
-def dir2dir(in_dir, out_dir=None, annotators=None, mem=None, libdir=None, libver=None, threads=1):
+def dir2dir(in_dir, out_dir=None, annotators=None, mem=None,
+            libdir=None, libver=None, threads=None):
+
+    files = []
+    for txt_file in os.listdir(in_dir):
+        fpath = os.path.join(in_dir, txt_file)
+        files.append(fpath)
+
+    files2dir(files, out_dir=out_dir, annotator=annotator,
+              mem=mem, libdir=libdir, libver=libver,
+              threads=threads)
+
+
+def files2dir(files, out_dir=None, annotators=None,
+              mem=None, libdir=None, libver=None, threads=None):
     
+    filelist = _build_filelist(files)    
+
     if out_dir is None:
-        out_dir = '.'
+        out_dir = '.'    
+    if not os.path.exists(out_dir):
+        os.mkdirs(out_dir)
 
     if annotators is None:
         annotators = _default_annotators
-
+        
     if mem is None:
-        mem = _default_mem
-    
+        mem = _default_mem           
+
     if libdir is None:
         libdir = os.getenv('CORENLP_HOME', '.')
 
     if libver is None:
         libver = os.getenv('CORENLP_VER', _default_libver)        
-    
-    filelist = _build_filelist(in_dir)
+
+    if threads is None:
+        threads = _default_threads                
 
     cpath = _build_classpath(libdir, libver)
 
@@ -40,9 +60,8 @@ def dir2dir(in_dir, out_dir=None, annotators=None, mem=None, libdir=None, libver
                                                    threads)
     subprocess.check_output(cmd, shell=True)
     filelist.close()
-    
-    
-        
+ 
+
 def _build_classpath(libdir, libver):
 
     jars = ['joda-time.jar',
@@ -62,11 +81,11 @@ def _build_classpath(libdir, libver):
         jarpaths.append(jarpath)
     return ':'.join(jarpaths)
 
-def _build_filelist(in_dir):
+def _build_filelist(filepaths):
+    
     filelist = tempfile.NamedTemporaryFile()
-    for txt_file in os.listdir(in_dir):
-        filename = os.path.join(in_dir, txt_file)
-        filelist.write(filename)
+    for filepath in filepaths::
+        filelist.write(filepath)
         filelist.write('\n')
     filelist.flush()
     return filelist
