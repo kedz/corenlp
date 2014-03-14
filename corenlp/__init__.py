@@ -1,7 +1,6 @@
 import xml.etree.cElementTree as ET
 import nltk
 from collections import defaultdict
-import corenlp.pipeline
 
 class Document:
     def __init__(self, xmlfile, pos=True, lemma=True, ner=True, parse=True,

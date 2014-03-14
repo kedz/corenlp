@@ -8,6 +8,7 @@ _default_libver = '3.2.0'
 _default_threads = 1
 _pipeline_class = 'edu.stanford.nlp.pipeline.StanfordCoreNLP'
 
+
 def dir2dir(in_dir, out_dir=None, annotators=None, mem=None,
             libdir=None, libver=None, threads=None):
 
@@ -29,7 +30,7 @@ def files2dir(files, out_dir=None, annotators=None,
     if out_dir is None:
         out_dir = '.'    
     if not os.path.exists(out_dir):
-        os.mkdirs(out_dir)
+        os.makedirs(out_dir)
 
     if annotators is None:
         annotators = _default_annotators
@@ -53,11 +54,12 @@ def files2dir(files, out_dir=None, annotators=None,
     
     cmd = 'java -Xmx{} -cp {} {} '\
           '-annotators {} -filelist {} '\
-          '-outputDirectory {} -threads {}'.format(mem, cpath, 
-                                                   _pipeline_class,
-                                                   ','.join(annotators),
-                                                   filelist.name, out_dir,
-                                                   threads)
+          '-outputDirectory {} -threads {} '\
+          '-replaceExtension'.format(mem, cpath, 
+                                     _pipeline_class,
+                                     ','.join(annotators),
+                                     filelist.name, out_dir,
+                                     threads)
     subprocess.check_output(cmd, shell=True)
     filelist.close()
  
@@ -84,7 +86,7 @@ def _build_classpath(libdir, libver):
 def _build_filelist(filepaths):
     
     filelist = tempfile.NamedTemporaryFile()
-    for filepath in filepaths::
+    for filepath in filepaths:
         filelist.write(filepath)
         filelist.write('\n')
     filelist.flush()
