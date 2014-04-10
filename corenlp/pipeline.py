@@ -17,7 +17,7 @@ def dir2dir(in_dir, out_dir=None, annotators=None, mem=None,
         fpath = os.path.join(in_dir, txt_file)
         files.append(fpath)
 
-    files2dir(files, out_dir=out_dir, annotator=annotator,
+    files2dir(files, out_dir=out_dir, annotators=annotators,
               mem=mem, libdir=libdir, libver=libver,
               threads=threads)
 

@@ -202,10 +202,10 @@ class MentionChain:
         mention_heads = []
         mention_tokens = []                
         for mention in mention_chain:
-            s = mention_chain[0].sent
-            h = mention_chain[0].head
-            start = mention_chain[0].start
-            end = mention_chain[0].end
+            s = mention.sent
+            h = mention.head
+            start = mention.start
+            end = mention.end
             mention_heads.append(doc[s][h])
             mention_tokens.append(doc[s][start:end])
         self.rep_head = mention_heads[0]
@@ -269,6 +269,19 @@ def _parse_source(source, use_pos=True, use_lemma=True, use_ner=True,
         else:
             if elem.tag == 'word':
                _word = unicode(elem.text)
+               if _word == u'-LRB-':
+                   _word = u'('
+               elif _word == u'-RRB-':
+                   _word = u')'
+               elif _word == u'-LCB-':
+                   _word = u'{'
+               elif _word == u'-RCB-':
+                   _word = u'}'
+               elif _word == u'-LSB-':
+                   _word = u'['
+               elif _word == u'-RSB-':
+                   _word = u']'
+
             elif elem.tag == 'lemma' and use_lemma:
                 _lemma = unicode(elem.text)
             elif elem.tag == 'POS' and use_pos:
@@ -280,6 +293,10 @@ def _parse_source(source, use_pos=True, use_lemma=True, use_ner=True,
             elif elem.tag == 'CharacterOffsetEnd':
                 _char_offset_end = int(elem.text)
             elif elem.tag == 'token':
+                if _word == '``' or _word == '\'\'': 
+                    if _char_offset_end - _char_offset_begin == 1:
+                        _word = '"'
+
                 _tokens.append(Token(_word, _lemma, _pos, _ner,
                                      _char_offset_begin, _char_offset_end,
                                      _token_idx))
