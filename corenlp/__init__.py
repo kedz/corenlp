@@ -74,7 +74,7 @@ class Document:
 class Sentence:
     def __init__(self, tokens, parse,
                  basic_deps, collapsed_deps, collapsed_ccproc_deps, idx):
-        self.tokens = tokens
+        self.tokens = tuple(tokens)
         self.parse = parse
         self.basic_deps = basic_deps
         self.coll_deps = collapsed_deps
@@ -116,7 +116,19 @@ class Sentence:
         if self._dgraph is None:
             self._dgraph = DependencyGraph(self.deps)
         return self._dgraph
-                
+      
+#    def _attrs(self):
+#        return (self.tokens, self.parse, self.basic_deps, self.coll_deps,
+#                self.coll_ccp_deps, self.deps, self._dgraph, self.idx)
+
+#    def __hash__(self):
+#        return hash(self._attrs())
+
+#    def __eq__(self, other):
+#        if not isinstance(other, Sentence):
+#            return False
+#        else:
+#            return self._attrs() == other._attrs()
 
 class Token:
     def __init__(self, surface, lem, pos, ner,
@@ -210,8 +222,8 @@ class MentionChain:
             mention_tokens.append(doc[s][start:end])
         self.rep_head = mention_heads[0]
         self.rep_tokens = mention_tokens[0]
-        self.mention_heads = mention_heads
-        self.mention_tokens = mention_tokens
+        self.mention_heads = tuple(mention_heads)
+        self.mention_tokens = tuple(mention_tokens)
 
 
 def _parse_source(source, use_pos=True, use_lemma=True, use_ner=True,

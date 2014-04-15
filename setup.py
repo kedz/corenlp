@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name = 'corenlp',
     packages = ['corenlp'],
-    version = '0.0.12',
+    version = '0.0.13',
     description = 'A python wrapper for the Stanford CoreNLP java library.',
     author='Chris Kedzie',
     author_email='kedzie@cs.columbia.edu',
