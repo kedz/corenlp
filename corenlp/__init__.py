@@ -73,7 +73,8 @@ class Document:
 
 class Sentence:
     def __init__(self, tokens, parse,
-                 basic_deps, collapsed_deps, collapsed_ccproc_deps, idx):
+                 basic_deps, collapsed_deps, collapsed_ccproc_deps, idx,
+                 sentiment, sentiment_value):
         self.tokens = tuple(tokens)
         self.parse = parse
         self.basic_deps = basic_deps
@@ -89,6 +90,8 @@ class Sentence:
             self.deps = None
         self._dgraph = None
         self.idx = idx
+        self.sentiment = sentiment
+        self.sentiment_value = sentiment_value
 
     def __getitem__(self, index):
         return self.tokens[index]
@@ -360,10 +363,20 @@ def _parse_source(source, use_pos=True, use_lemma=True, use_ner=True,
 
             elif elem.tag == 'sentence':
                 if _not_in_coref:
+                    
+                    sentiment = None
+                    sentiment_val = None
+                    if 'sentiment' in elem.attrib:
+                        sentiment = elem.attrib['sentiment']
+                    if 'sentimentValue' in elem.attrib:
+                        sentiment_val = float(elem.attrib['sentimentValue'])
+                    
                     sents.append(Sentence(_tokens, _parse,
                                           _basic_deps, _collapsed_deps,
-                                          _collapsed_ccproc_deps, _sent_idx))
-
+                                          _collapsed_ccproc_deps, _sent_idx,
+                                          sentiment, sentiment_val))
+                   #sentimentValue="1" sentiment="Negative">
+                   #print elem.attribute 
                     _tokens = []
                     _parse = None
                     _basic_deps = None

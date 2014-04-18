@@ -70,7 +70,8 @@ def _build_classpath(libdir, libver):
             'jollyday.jar',
             'stanford-corenlp-{}.jar'.format(libver),
             'stanford-corenlp-{}-models.jar'.format(libver),
-            'xom.jar']
+            'xom.jar',
+            'ejml-0.23.jar']
 
     jarpaths = []
     for jar in jars:
