@@ -375,8 +375,6 @@ def _parse_source(source, use_pos=True, use_lemma=True, use_ner=True,
                                           _basic_deps, _collapsed_deps,
                                           _collapsed_ccproc_deps, _sent_idx,
                                           sentiment, sentiment_val))
-                   #sentimentValue="1" sentiment="Negative">
-                   #print elem.attribute 
                     _tokens = []
                     _parse = None
                     _basic_deps = None
