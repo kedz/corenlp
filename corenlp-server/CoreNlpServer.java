@@ -41,6 +41,8 @@ class CoreNlpServer {
             annString += ", " + annotators[i];
         Properties props = new Properties();
         props.put("annotators", annString);
+        props.put("parse.maxlen", 60);
+        props.put("ssplit.newlineIsSentenceBreak", "two");
         StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
         ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
         
@@ -53,7 +55,6 @@ class CoreNlpServer {
         while (true) {
              
             clientSocket = serverSocket.accept();
-            System.out.println("I've been accepted");
             threadPool.execute(new CoreNlpHandler(clientSocket, pipeline));
 
         }
