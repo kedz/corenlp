@@ -5,11 +5,13 @@ import socket
 import pkg_resources
 import subprocess
 from StringIO import StringIO
-from . import Document
+from .file_reader import read_xml
+import corenlp.util
 
 # Client-Server protocal codes
 CHECK_IN = 'c'
 ANNOTATE = 'a'
+QUIT = 'q'
 SUCCESS = 'SUCCESS'
 BUFFER_SIZE = 1024
 
@@ -77,9 +79,10 @@ class CoreNLPClient:
         if xml is True:
             return buf
         else:
-            return Document(StringIO(buf))
+            return read_xml(StringIO(buf))
 
-def start(port=8090, mem=u'3G', annotators=None, threads=1):
+def start(port=8090, mem=u'3G', annotators=None, threads=1,
+          server_start_timeout=60):
     
     cnlp_dir = os.environ.get('CORENLP_DIR')
     cnlp_ver = os.environ.get('CORENLP_VER')
@@ -91,7 +94,7 @@ def start(port=8090, mem=u'3G', annotators=None, threads=1):
             u'Set CORENLP_VER environment variable to the CoreNLP version' + \
             u' (format "X.X.X").')
 
-    cpath = validate_jars(cnlp_dir, cnlp_ver)
+    cpath = corenlp.util.validate_jars(cnlp_dir, cnlp_ver)
     cpath = u'{}:{}'.format(cpath, 
                             pkg_resources.resource_filename("corenlp", "bin"))
 
@@ -100,30 +103,48 @@ def start(port=8090, mem=u'3G', annotators=None, threads=1):
 
     if annotators is not None:
         args.extend([u'-a', u','.join(annotators)])
-
-    subprocess.Popen(args)
-
-class MissingJavaLibException(Exception):
-    pass
-
-def validate_jars(path, ver):
-
-    ejml = u'ejml-0.23.jar'
-    joda = u'joda-time.jar'
-    jollyday = u'jollyday.jar'
-    cnlp = u'stanford-corenlp-{}.jar'.format(ver)
-    models = u'stanford-corenlp-{}-models.jar'.format(ver)
-    xom = u'xom.jar'
+    args.append('>corenlp.log 2>&1 &')
     
-    jars = [ejml, joda, jollyday, cnlp, models, xom]
+    cmd = ' '.join(args)
 
-    for jar in jars:
-        jar_path = os.path.join(path, jar)
-        if not os.path.exists(jar_path):
-            raise MissingJavaLibException(
-                u'Cannot find jar file {} in {}\n'.format(path, jar))
+    subprocess.Popen(cmd, shell=True)
 
-    return u':'.join([os.path.join(path, jar) for jar in jars])
+    import socket
+    import time
+    server_on = False
+    start = time.time()
+    duration = time.time() - start
+
+    while duration < server_start_timeout and server_on is False:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect(('127.0.0.1', port))
+            s.sendall(CHECK_IN)
+            data = s.recv(BUFFER_SIZE)
+            assert data == SUCCESS
+            s.close()
+            server_on = True
+        except socket.error, e:    
+            pass
+
+        time.sleep(1)
+        duration = time.time() - start
+
+def stop(port=8090):
+    host = u'localhost'
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        sock.connect((host, port))
+        sock.sendall(QUIT)
+        data = sock.recv(BUFFER_SIZE)
+        assert data == SUCCESS
+        sock.close()
+    except socket.error, e:    
+        if u'[Errno 111] Connection refused' == unicode(e):
+            raise Exception(u'Could not find CoreNLP server on {}:{}\n'.format(
+                host, port))
+
 
 if __name__ == u'__main__':
     start()

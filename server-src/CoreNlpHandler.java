@@ -4,20 +4,24 @@ import java.nio.charset.Charset;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import edu.stanford.nlp.pipeline.*;
+import java.util.concurrent.ExecutorService;
 
 
 public class CoreNlpHandler implements Runnable {
 
     public static char CHECK_IN = 'c'; 
     public static char ANNOTATE = 'a'; 
+    public static char QUIT = 'q'; 
     public static int BUFFER_SIZE = 1024;
     public static char[] SUCCESS = "SUCCESS".toCharArray();
     protected Socket clientSocket = null;
     protected StanfordCoreNLP pipeline = null;
+    protected ExecutorService threadPool = null;
 
     public CoreNlpHandler(Socket clientSocket, StanfordCoreNLP pipeline) {
         this.clientSocket = clientSocket;
         this.pipeline = pipeline;
+        this.threadPool = threadPool;
     }
 
     public void run() {
@@ -37,6 +41,15 @@ public class CoreNlpHandler implements Runnable {
                 out.flush();
                 out.close();
                 in.close();
+            } else if (cbuf[0] == QUIT) {
+            
+                synchronized(CoreNlpServer.class) {
+                    CoreNlpServer.serverSocket.close(); 
+                    CoreNlpServer.closingClientPrintWriters.add(out);
+                    CoreNlpServer.closingClientBufferedReaders.add(in);
+                    CoreNlpServer.shutdownFlag = true;
+                }
+
             } else if (cbuf[0] == ANNOTATE) {
                 int messageSize = 0;
                 for (int i = 1; i < bytesRead; i++) {
@@ -53,11 +66,15 @@ public class CoreNlpHandler implements Runnable {
                     inputText +=  new String(cbuf, 0, bytesRead);
                 }
 
+                //System.out.println(inputText);
                 String outputString = annotateString(inputText);
                 messageSize = outputString.getBytes().length;
                 out.write(messageSize + " " + outputString);
                 out.flush();
-                
+                clientSocket.close();
+            } else {
+                System.out.println("Pinged: " + clientSocket.getRemoteSocketAddress());
+                clientSocket.close();
             }
 
         } catch (IOException e) {
@@ -67,6 +84,7 @@ public class CoreNlpHandler implements Runnable {
             System.out.println(e.getMessage());
         }
     }
+
 
     public String annotateString(String inputString) {
         Annotation document = new Annotation(inputString);
