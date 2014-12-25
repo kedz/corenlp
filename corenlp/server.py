@@ -7,6 +7,7 @@ import subprocess
 from StringIO import StringIO
 from .file_reader import read_xml
 import corenlp.util
+import time
 
 # Client-Server protocal codes
 CHECK_IN = 'c'
@@ -94,11 +95,17 @@ def start(port=8090, mem=u'3G', annotators=None, threads=1,
             u'Set CORENLP_VER environment variable to the CoreNLP version' + \
             u' (format "X.X.X").')
 
+    java_home = os.getenv("JAVA_HOME", None)
+    if java_home is None:
+        java_cmd = "java"
+    else:
+        java_cmd = os.path.join(java_home, "bin", "java")
+
     cpath = corenlp.util.validate_jars(cnlp_dir, cnlp_ver)
     cpath = u'{}:{}'.format(cpath, 
                             pkg_resources.resource_filename("corenlp", "bin"))
 
-    args = [u'nohup', u'java', u'-Xmx{}'.format(mem), u'-cp', cpath,
+    args = [u'nohup', java_cmd, u'-Xmx{}'.format(mem), u'-cp', cpath,
             u'CoreNlpServer', u'-p', str(port), u'-t', str(threads)]
 
     if annotators is not None:
@@ -109,8 +116,6 @@ def start(port=8090, mem=u'3G', annotators=None, threads=1,
 
     subprocess.Popen(cmd, shell=True)
 
-    import socket
-    import time
     server_on = False
     start = time.time()
     duration = time.time() - start
@@ -145,6 +150,20 @@ def stop(port=8090):
             raise Exception(u'Could not find CoreNLP server on {}:{}\n'.format(
                 host, port))
 
+def check_status(port=8090):
+    server_on = False
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(5)
+        s.connect(('127.0.0.1', port))
+        s.sendall(CHECK_IN)
+        data = s.recv(BUFFER_SIZE)
+        if data == SUCCESS:
+            server_on = True
+        s.close()
+    except socket.error, e:    
+        pass
+    return server_on
 
 if __name__ == u'__main__':
     start()

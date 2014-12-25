@@ -18,6 +18,13 @@ def validate_deps():
     return path, ver
 
 def build_server(corenlp_path, corenlp_ver):
+
+    java_home = os.getenv("JAVA_HOME", None)
+    if java_home is None:
+        javac_cmd = "javac"
+    else:
+        javac_cmd = os.path.join(java_home, "bin", "javac")
+
     path = os.path.dirname(os.path.realpath(__file__))
     file, pathname, description = imp.find_module('util', [os.path.join(path, 'corenlp')])
     util = imp.load_module('util', file, pathname, description)
@@ -28,7 +35,7 @@ def build_server(corenlp_path, corenlp_ver):
     handler_src = os.path.join(path, u"server-src", u"CoreNlpHandler.java")
     server_cla = os.path.join(path, u"server-src", u"CoreNlpServer.class")
     handler_cla = os.path.join(path, u"server-src", u"CoreNlpHandler.class")
-    os.system('javac -cp {} {}'.format(classpath, src))
+    os.system('{} -cp {} {}'.format(javac_cmd, classpath, src))
     if not os.path.exists(server_src) or not os.path.exists(handler_src):
         print "Failed to build java server."
         sys.exit(1)
