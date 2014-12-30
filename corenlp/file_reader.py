@@ -130,7 +130,7 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies'):
                 if idx > -1:
                     _dependent = _tokens[idx]
             elif elem.tag == 'dep' and _gov2deps is not None:
-                rel = elem.attrib['type'].decode(u'utf-8')
+                rel = elem.attrib['type']
                 if _governor not in _gov2deps:
                     _gov2deps[_governor] = set()
                 _gov2deps[_governor].add((rel, _dependent))
