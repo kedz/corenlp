@@ -72,7 +72,6 @@ def build_server(corenlp_path, corenlp_ver):
         u"CoreNLPServerInitializer.class")
 
     bin_list = " ".join([server_cla, handler_cla, init_cla])
-    print bin_list
 
     os.system('cd {}; jar cf {} {}'.format(bin_dir, jar, bin_list))
     if not os.path.exists(jar):
