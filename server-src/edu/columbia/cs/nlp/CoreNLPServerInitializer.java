@@ -6,7 +6,6 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
-import io.netty.handler.ssl.SslContext;
 import edu.stanford.nlp.pipeline.*;
 
 public class CoreNLPServerInitializer 
@@ -15,8 +14,13 @@ public class CoreNLPServerInitializer
     private static final StringDecoder DECODER = new StringDecoder();
     private static final StringEncoder ENCODER = new StringEncoder();
     private static CoreNLPServerHandler SERVER_HANDLER;  
+    private int maxMessageLength;
+    
 
-    public CoreNLPServerInitializer(StanfordCoreNLP pipeline) {
+    public CoreNLPServerInitializer(
+        StanfordCoreNLP pipeline, int maxMessageLength) {
+        
+        this.maxMessageLength = maxMessageLength;
         SERVER_HANDLER = new CoreNLPServerHandler(pipeline);
     }
     
@@ -24,7 +28,8 @@ public class CoreNLPServerInitializer
     public void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline pipeline = ch.pipeline();
         pipeline.addLast(
-            new DelimiterBasedFrameDecoder(8192, Delimiters.nulDelimiter()));
+            new DelimiterBasedFrameDecoder(
+                maxMessageLength, Delimiters.nulDelimiter()));
         // the encoder and decoder are static as these are sharable
         pipeline.addLast(DECODER);
         pipeline.addLast(ENCODER);
