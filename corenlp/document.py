@@ -13,10 +13,16 @@ class Document(object):
         return len(self.sents)
 
     def __unicode__(self):
-        return u'\n'.join(unicode(sent) for sent in self.sents)   
+        return self.format_tokens() 
     
     def __str__(self):
         return unicode(self).encode(u'utf-8')
+
+    def format_tokens(self, fmt=None, token_sep=u' ', sentence_sep=u'\n'):
+        return sentence_sep.join(
+                [s.format_tokens(fmt=fmt, token_sep=token_sep) 
+                 for s in self.sents])
+
 
         
 class Sentence(object):
@@ -81,6 +87,13 @@ class Sentence(object):
 ##            return False
 ##        else:
 ##            return self._attrs() == other._attrs()
+
+    def format_tokens(self, fmt=None, token_sep=u' '):
+        if fmt is None:
+            fmt = lambda t: unicode(t)
+        return token_sep.join([fmt(t) for t in self.tokens]) 
+
+
 
 class Token(object):
     def __init__(self, surface, lem, pos, ne, token_index, sent_index):
