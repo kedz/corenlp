@@ -8,6 +8,8 @@ from .file_reader import read_xml
 from itertools import izip
 
 class CoreNLPClient(object):
+    """This is the main class for interacting with the CoreNLP server."""
+    
     def __init__(self, host="localhost", port=9989, verbose=False):
         self.host = host
         self.port = port
@@ -16,6 +18,14 @@ class CoreNLPClient(object):
         self.verbose_ = verbose
 
     def annotate(self, str_or_unicode, return_xml=False):
+        """Annotate a string or unicode object.
+           
+           :param str_or_unicode: string to annotate
+           :type str_or_unicode: str or unicode
+           :param return_xml: if True return xml rather than a Document 
+           :type return_xml: bool
+           :rtype: Document or xml"""
+
         if isinstance(str_or_unicode, unicode):
             if self.verbose_:
                 print "cnlpclient :: converting encoding unicode as bytes"
@@ -66,46 +76,22 @@ class CoreNLPClient(object):
         self.sock.sendall(p.tokens.shutdown) 
         self.sock.sendall(p.tokens.eof)
 
-    def annotate_mp(self, texts, n_procs=2, return_xml=False):
-        jobs = [(key, text) for key, text in enumerate(texts)] 
-        max_jobs = len(jobs)
-        manager = multiprocessing.Manager()
-        job_queue = manager.Queue()
-        result_queue = manager.Queue()
-
-        for job in jobs:
-            job_queue.put(job)
-
-        pool = []
-        for i in xrange(n_procs):
-            p = multiprocessing.Process(
-                target=process_worker, args=(job_queue, result_queue),
-                kwargs={u'host': self.host, u'port': self.port, 
-                    u'return_xml': return_xml})
-            p.start()
-            pool.append(p)
-
-        try:
-            results = [None] * max_jobs 
-            for n_job in xrange(max_jobs):
-                key, result = result_queue.get(block=True)
-                results[key] = result
-
-            for p in pool:
-                p.join()
-
-            return results
-
-        except KeyboardInterrupt:
-            print "Completing current jobs and shutting down!"
-            while not job_queue.empty():
-                job_queue.get()
-            for p in pool:
-                p.join()
-            sys.exit()
-
-
     def annotate_mp(self, texts, keys=None, input=u"content", n_procs=2, return_xml=False):
+        """Batch annotate a list of texts, using n_procs processes. n_procs should be <= 
+        the number of threads available on the server. If input == "content", texts should be
+        a list of strings. Else if input == "filename", texts is a list of valid paths to
+        read from.
+           
+        :param texts: list of input texts to process
+        :type texts: str or unicode
+        :param input: type of texts (list of strings/unicodes or filenames)
+        :type intput: str (content|filename)
+        :param return_xml: if True return xml rather than Documents 
+        :type return_xml: bool
+        :param n_procs: number of processes to run in parallel
+        :type n_procs: positive int
+        :rtype: list of Documents or xml
+        """
         results_iter = self.annotate_mp_iter(
             texts, keys=None, input=input, n_procs=n_procs, return_xml=return_xml)
         results = [result for result in results_iter]
