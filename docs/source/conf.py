@@ -31,6 +31,7 @@ import os
 extensions = [
     'sphinx.ext.pngmath',
     'sphinx.ext.viewcode',
+    'sphinx.ext.autodoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -111,6 +111,13 @@ Alternatively, you can get the raw XML output as a unicode object:
 
 
 
+CoreNLPClient
+=============
+
+
+.. automodule:: corenlp.client
+   :members:
+    
 Indices and tables
 ==================
 
