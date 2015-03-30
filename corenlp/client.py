@@ -95,7 +95,10 @@ class CoreNLPClient(object):
         results_iter = self.annotate_mp_iter(
             texts, keys=None, input=input, n_procs=n_procs, return_xml=return_xml)
         results = [result for result in results_iter]
-        return keys, results
+        if keys is None:
+            return results
+        else:
+            return keys, results
 
     def annotate_mp_iter(self, texts, keys=None, input=u"content", 
                          n_procs=2, return_xml=False):
