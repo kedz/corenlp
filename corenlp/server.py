@@ -6,6 +6,34 @@ import corenlp.util
 import time
 import corenlp.protocol as p
 import tempfile
+from .client import CoreNLPClient
+
+class Server(object):
+
+    
+    def __init__(self, port=9989, mem=u'3G', annotators=None, threads=1,
+                 max_message_len=32768, server_start_timeout=60, 
+                 corenlp_props=None, cnlp_dir=None, cnlp_ver=None):
+        self.port = port
+        self.mem = mem
+        self.annotators = annotators
+        self.threads = threads
+        self.max_message_len = max_message_len
+        self.server_start_timeout = server_start_timeout
+        self.corenlp_props = corenlp_props
+        self.cnlp_dir = cnlp_dir
+        self.cnlp_ver = cnlp_ver
+
+    def __enter__(self):
+        start(port=self.port, mem=self.mem, annotators=self.annotators, 
+              threads=self.threads, max_message_len=self.max_message_len, 
+              server_start_timeout=self.server_start_timeout, 
+              corenlp_props=self.corenlp_props, cnlp_dir=self.cnlp_dir, 
+              cnlp_ver=self.cnlp_ver)
+        return CoreNLPClient(port=self.port)      
+
+    def __exit__(self, type, value, traceback):
+        stop(port=self.port)
 
 def start(port=9989, mem=u'3G', annotators=None, threads=1,
           max_message_len=32768, server_start_timeout=60, 
