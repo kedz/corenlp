@@ -1,3 +1,4 @@
+import sys
 import socket
 import signal
 import multiprocessing
@@ -121,7 +122,11 @@ class CoreNLPClient(object):
                 yield keys[i], results[i]
 
     def annotate_mp_unordered_iter(self, texts, keys=None, input=u"content", 
-                                   n_procs=2, return_xml=False):
+                                   n_procs=2, return_xml=False, 
+                                   show_progress=False):
+        
+        show_progress = False if not sys.stdin.isatty() else show_progress
+
         if keys is not None:
             has_key = True
             assert len(keys) == len(texts)
@@ -130,9 +135,11 @@ class CoreNLPClient(object):
         else:
             has_key = False
             jobs = texts
-            #jobs = [(jid, text) for jid, text in enumerate(texts)] 
+        
         max_jobs = len(jobs)
+        
         manager = multiprocessing.Manager()
+        
         job_queue = manager.Queue()
         result_queue = manager.Queue()
 
@@ -150,14 +157,25 @@ class CoreNLPClient(object):
             pool.append(p)
 
         try:
-            #results = [None] * max_jobs 
             if has_key is True:
                 for n_job in xrange(max_jobs):
                     key, result = result_queue.get(block=True)
+                    if show_progress is True:
+                        sys.stdout.write(
+                            "corenlp pipeline {:6.2f}% complete\r" .format(
+                                (n_job + 1) * 100. / max_jobs))
+                        sys.stdout.flush()
+
                     yield key, result
             else:
                 for n_job in xrange(max_jobs):
                     result = result_queue.get(block=True)
+                    if show_progress is True:
+                        sys.stdout.write(
+                            "corenlp pipeline {:6.2f}% complete\r" .format(
+                                (n_job + 1) * 100. / max_jobs))
+                        sys.stdout.flush()
+
                     yield result
 
             for p in pool:
@@ -170,8 +188,9 @@ class CoreNLPClient(object):
             for p in pool:
                 p.join()
             sys.exit()
-
-
+        if show_progress is True:
+            sys.stdout.write("                                    \r")
+            sys.stdout.flush()
 
 def process_worker(job_queue, result_queue, **kwargs):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
