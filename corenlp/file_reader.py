@@ -2,6 +2,7 @@ from .document import *
 import os
 import tarfile    
 import xml.etree.cElementTree as ET
+import nltk.tree
 
 __brackets = {
     u'-LRB-': u'(',
@@ -44,7 +45,7 @@ def open_tar_gz(path, dep_type=u'collapsed-ccprocessed-dependencies',
                             convert_brackets=convert_brackets)
 
 def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
-                  convert_brackets=True):
+                  convert_brackets=True, use_parse=True):
 
     # Temporary vars for token level attributes.
     _word = None
@@ -124,8 +125,12 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
                 _token_idx += 1
 #
 #            # Recover Parse Tree here.
-#            elif elem.tag == 'parse' and use_parse:
-#                _parse = nltk.tree.Tree(unicode(elem.text))
+            elif elem.tag == 'parse' and use_parse:
+                if isinstance(elem.text, str):
+                    tree_text = elem.text.decode(u"utf-8")
+                else:
+                    tree_text = elem.text
+                _parse = nltk.tree.Tree.fromstring(tree_text)
 #
 #            # Recover dependencies here.
             elif elem.tag == 'governor' and _gov2deps is not None:
@@ -173,7 +178,10 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
 #                    if 'sentimentValue' in elem.attrib:
 #                        sentiment_val = float(elem.attrib['sentimentValue'])
 #                    
-                    sents.append(Sentence(_tokens, _gov2deps, _dep2govs, _sent_idx))#  , _parse,
+                    sents.append(
+                        Sentence(
+                            _tokens, _gov2deps, _dep2govs, _sent_idx,
+                            _parse,))
 #                                          _basic_deps, _collapsed_deps,
 #                                          _collapsed_ccproc_deps, _sent_idx,
 #                                          sentiment, sentiment_val))

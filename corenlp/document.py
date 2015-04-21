@@ -26,12 +26,14 @@ class Document(object):
 
         
 class Sentence(object):
-    def __init__(self, tokens, gov2deps, dep2govs, sent_index): # parse, deps, dep_type, sent_idx,
+    def __init__(self, tokens, gov2deps, dep2govs, sent_index, parse): 
+        
+        #deps, dep_type, sent_idx,
                #  sentiment, sentiment_value):
         self.tokens = tuple(tokens)
         self.gov2deps = gov2deps
         self.dep2govs = dep2govs
-#        self.parse = parse
+        self.parse = parse
 #        self.deps = deps
 #        self.dep_type = dep_type
 #        self._dgraph = None
