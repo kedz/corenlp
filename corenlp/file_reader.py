@@ -18,25 +18,33 @@ __brackets = {
     u'-rsb-': u']'}
 
 
-def open_dir(path, dep_type=u'collapsed-ccprocessed-dependencies'):
+def open_dir(path, dep_type=u'collapsed-ccprocessed-dependencies', 
+             convert_brackets=True):
     for fname in os.listdir(path):
         if fname.endswith(u'.xml'):
-            yield read_xml(os.path.join(path, fname), dep_type=dep_type)
+            yield read_xml(os.path.join(path, fname), dep_type=dep_type,
+                           convert_brackets=convert_brackets)
         elif fname.endswith(u'.tar.gz') or fname.endswith(u'.tgz'):
             fpath = os.path.join(path, fname)
-            for doc in open_tar_gz(fpath, dep_type=dep_type):
+            for doc in open_tar_gz(fpath, dep_type=dep_type, 
+                    convert_brackets=convert_brackets):
                 yield doc
 
 
-def read_xml(path, dep_type=u'collapsed-ccprocessed-dependencies'):
-    return _parse_source(path, dep_type=dep_type)
+def read_xml(path, dep_type=u'collapsed-ccprocessed-dependencies',
+             convert_brackets=True):
+    return _parse_source(path, dep_type=dep_type,
+                         convert_brackets=convert_brackets)
 
-def open_tar_gz(path, dep_type=u'collapsed-ccprocessed-dependencies'):
+def open_tar_gz(path, dep_type=u'collapsed-ccprocessed-dependencies',
+                convert_brackets=True):
     tar = tarfile.open(mode="r:gz", fileobj=file(path))
     for member in tar:
-        yield _parse_source(tar.extractfile(member))
+        yield _parse_source(tar.extractfile(member), dep_type=dep_type,
+                            convert_brackets=convert_brackets)
 
-def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies'):
+def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
+                  convert_brackets=True):
 
     # Temporary vars for token level attributes.
     _word = None
@@ -80,7 +88,8 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies'):
                     _word = elem.text.decode(u'utf-8')               
                 else:
                     _word = elem.text
-                _word = __brackets.get(_word, _word)
+                if convert_brackets is True:
+                    _word = __brackets.get(_word, _word)
             elif elem.tag == 'lemma':
                 if isinstance(elem.text, str):
                     _lemma = elem.text.decode(u'utf-8')    
