@@ -131,6 +131,11 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
                 else:
                     tree_text = elem.text
                 _parse = nltk.tree.Tree.fromstring(tree_text)
+                if convert_brackets is True:
+                    for lp in _parse.treepositions("leaves"):
+                        leaf = _parse[lp]
+                        _parse[lp] = __brackets.get(leaf, leaf)
+
 #
 #            # Recover dependencies here.
             elif elem.tag == 'governor' and _gov2deps is not None:
