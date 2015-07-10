@@ -53,6 +53,43 @@ class Sentence(object):
     def __repr__(self):
         return str(self)
 
+    def get_ne_spans(self):
+        spans = []
+        curr_ne = None
+        curr_ne_type = None
+        curr_ne_start = None
+
+        for t, token in enumerate(self.tokens):
+            if token.ne != "O":
+                # start of new ne
+                if curr_ne_type != token.ne:
+                    
+                    # curr_ne is not empty
+                    if curr_ne is not None:
+                        spans.append(
+                            (curr_ne, 
+                             curr_ne_type,
+                             (curr_ne_start, t)))
+                    curr_ne = unicode(token)
+                    curr_ne_type= token.ne
+                    curr_ne_start = t
+                # append previous
+                else:
+                    curr_ne += u" " + unicode(token)
+            elif curr_ne is not None:
+                spans.append(
+                    (curr_ne, 
+                     curr_ne_type,
+                     (curr_ne_start, t)))
+                curr_ne = None
+                curr_ne_type = None
+                curr_ne_start = None
+        if curr_ne is not None:
+            spans.append(
+                (curr_ne,
+                 curr_ne_type,
+                 (curr_ne_start, len(self.tokens))))
+        return spans
 #    def __str__(self):
 #        tokstrings = []
 #        prev_offset = self[0].char_offset_begin
@@ -98,7 +135,7 @@ class Sentence(object):
 
 
 class Token(object):
-    def __init__(self, surface, lem, pos, ne, token_index, sent_index):
+    def __init__(self, surface, lem, pos, ne, nne, token_index, sent_index):
 #                 char_offset_begin, char_offset_end, idx):
 
         if isinstance(surface, str):
@@ -109,6 +146,7 @@ class Token(object):
         self.lem = lem
         self.pos = pos
         self.ne = ne
+        self.nne = nne
         self.index = token_index
         self.sent_index = sent_index
 #        self.char_offset_begin = char_offset_begin

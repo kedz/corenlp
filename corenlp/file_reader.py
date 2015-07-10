@@ -52,6 +52,7 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
     _lemma = None
     _pos = None
     _ner = None
+    _nner = None
     _char_offset_begin = None
     _char_offset_end = None
     _token_idx = 0
@@ -102,7 +103,16 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
                 else:
                     _pos = elem.text
             elif elem.tag == 'NER':
-                _ner = elem.text.decode(u'utf-8')
+                if isinstance(_ner, str):
+                    _ner = elem.text.decode(u'utf-8') 
+                else:
+                    _ner = elem.text
+
+            elif elem.tag == "NormalizedNER":
+                if isinstance(_nner, str):
+                    _nner = elem.text.decode(u'utf-8') 
+                else:
+                    _nner = elem.text
 #            elif elem.tag == 'CharacterOffsetBegin':
 #                _char_offset_begin = int(elem.text)
 #            elif elem.tag == 'CharacterOffsetEnd':
@@ -113,13 +123,15 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
 #                        _word = '"'
 #
                 _tokens.append(
-                    Token(_word, _lemma, _pos, _ner, _token_idx, _sent_idx)) 
+                    Token(_word, _lemma, _pos, _ner, _nner, _token_idx, 
+                          _sent_idx)) 
 #                                     _char_offset_begin, _char_offset_end,
 #
                 _word = None
                 _lemma = None
                 _pos = None
                 _ner = None
+                _nner = None
 #                _char_offset_begin = None
 #                _char_offset_end = None
                 _token_idx += 1
@@ -143,7 +155,7 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
                 if idx > -1:
                     _governor = _tokens[idx]
                 else:
-                    _governor = Token('ROOT', 'root', 'ROOT', None, -1, _sent_idx)
+                    _governor = Token('ROOT', 'root', 'ROOT', None, None, -1, _sent_idx)
             elif elem.tag == 'dependent' and _gov2deps is not None:
                 idx = int(elem.attrib['idx']) - 1
                 if idx > -1:
