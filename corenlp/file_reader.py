@@ -3,6 +3,7 @@ import os
 import tarfile    
 import xml.etree.cElementTree as ET
 import nltk.tree
+from .coref import Mention, CorefChain
 
 __brackets = {
     u'-LRB-': u'(',
@@ -45,7 +46,7 @@ def open_tar_gz(path, dep_type=u'collapsed-ccprocessed-dependencies',
                             convert_brackets=convert_brackets)
 
 def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
-                  convert_brackets=True, use_parse=True):
+                  convert_brackets=True, use_parse=True, use_coref=True):
 
     # Temporary vars for token level attributes.
     _word = None
@@ -70,12 +71,12 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
     sents = []
 
     _not_in_coref = True
-#    _coref_start = None
-#    _coref_end = None
-#    _coref_head = None
-#    _coref_sentence = None
-#    _mentions = []
-#    _mention_chains = []
+    _coref_start = None
+    _coref_end = None
+    _coref_head = None
+    _coref_sentence = None
+    _mentions = []
+    _coref_chains = []
 
 
     for event, elem in ET.iterparse(source, events=('start', 'end')):
@@ -170,15 +171,20 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
                 _dep2govs[_dependent].add((rel, _governor))
                 
 #            # Recover coref chain here.
-#            elif elem.tag == 'start' and use_coref:
-#                _coref_start = int(elem.text) - 1
-#            elif elem.tag == 'end' and use_coref:
-#                _coref_end = int(elem.text) - 1
-#            elif elem.tag == 'head' and use_coref:
-#                _coref_head = int(elem.text) - 1
-#            elif elem.tag == 'mention' and use_coref:
-#                _mentions.append(Mention(_coref_start, _coref_end,
-#                                         _coref_head, _coref_sentence))
+            elif elem.tag == 'start' and use_coref:
+                _coref_start = int(elem.text) - 1
+            elif elem.tag == 'end' and use_coref:
+                _coref_end = int(elem.text) - 1
+            elif elem.tag == 'head' and use_coref:
+                _coref_head = int(elem.text) - 1
+            elif elem.tag == 'text' and use_coref:
+                if isinstance(_nner, str):
+                    _coref_text = elem.text.decode("utf8")
+                else:
+                    _coref_text = elem.text
+            #elif elem.tag == 'mention' and use_coref:
+            #    _mentions.append(Mention(_coref_start, _coref_end,
+            #                             _coref_head, _coref_sentence))
 #
 #            elif elem.tag == 'coreference' and use_coref:
 #                if len(_mentions) > 0:
@@ -210,11 +216,22 @@ def _parse_source(source, dep_type=u'collapsed-ccprocessed-dependencies',
                     _token_idx = 0
                     _sent_idx += 1
 #
-#                else:
-#                    _coref_sentence = int(elem.text) - 1
+                else:
+                    _coref_sentence = int(elem.text) - 1
 #
             elif elem.tag == 'sentences':
                 _not_in_coref = False
+
+            elif elem.tag == 'mention' and use_coref:
+                #print _coref_sentence
+                _mentions.append(
+                    Mention(_coref_start, _coref_end, _coref_head, 
+                        _coref_sentence, _coref_text))
+            elif elem.tag == "coreference" and use_coref \
+                    and len(_mentions) > 0:
+                _coref_chains.append(CorefChain(_mentions))
+                _mentions = []
+
 #
 #    return sents, _mention_chains
-    return Document(sents)
+    return Document(sents, _coref_chains)

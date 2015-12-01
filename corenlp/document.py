@@ -3,8 +3,9 @@ _ptb_verb_tags = \
     set([u'VB', u'VBD', u'VBG', u'VBN', u'VBP', u'VBZ'])
 
 class Document(object):
-    def __init__(self, sents):
+    def __init__(self, sents, coref_chains):
         self.sents = tuple(sents)
+        self.coref_chains = coref_chains
         
     def __getitem__(self, index):
         return self.sents[index]
